@@ -13,6 +13,7 @@ module ChefClientUpdaterHelper
       product_version: new_resource.version == 'latest' ? :latest : new_resource.version,
       install_command_options: new_resource.install_command_options,
     }
+    options[:license_id] = new_resource.license_id if new_resource.license_id
     options = add_download_url_override_options(options)
 
     Chef::Log.debug("Passing options to mixlib-install: #{options}")

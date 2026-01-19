@@ -113,6 +113,7 @@ Installs the mixlib-install/mixlib-install gems and upgrades the Chef Infra Clie
 - `handle_zip_download_url` - Url to the Handle zip archive used by Windows. Used to override the default in airgapped environments. Default: https://download.sysinternals.com/files/Handle.zip (Note that you can also override the `default['chef_client_updater']['handle_exe_path']` attribute if you already have that binary somewhere on your system)
 - `event_log_service_restart` - Whether the Event Log Service on Windows should be restarted to release any locked files. Default: `true`
 - `install_command_options` - Additional parameters to pass to the [mixlib-install script](https://github.com/chef/mixlib-install/tree/main#install-scripts). Default: `{}`
+- `license_id` - License ID for accessing commercial or trial API downloads. This is passed to mixlib-install to authenticate against the commercial API endpoints. Default: `nil`
 
 #### examples
 

@@ -47,3 +47,4 @@ attribute :rubygems_url, kind_of: String, default: lazy { Chef::Config[:rubygems
 attribute :handle_zip_download_url, kind_of: String, default: 'https://download.sysinternals.com/files/Handle.zip'
 attribute :event_log_service_restart, kind_of: [TrueClass, FalseClass], default: true
 attribute :install_command_options, kind_of: Hash, default: {}
+attribute :license_id, kind_of: String

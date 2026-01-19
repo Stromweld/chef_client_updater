@@ -18,19 +18,17 @@ verifier:
   name: inspec
 
 platforms:
-  - name: centos-6
-  - name: centos-7
-  - name: centos-8
-  - name: debian-9
-  - name: debian-10
+  - name: almalinux-9
+  - name: almalinux-10
+  - name: debian-12
+  - name: debian-13
   - name: fedora-latest
-  - name: freebsd-12
-  - name: ubuntu-16.04
-  - name: ubuntu-18.04
-  - name: ubuntu-20.04
-  - name: windows-2012r2
+  - name: freebsd-15
+  - name: ubuntu-22.04
+  - name: ubuntu-24.04
+  - name: windows-2022
     driver:
-      box: tas50/windows_2012r2
+      box: stromweld/windows-2022
       customize:
         memory: 4096
     provisioner:
@@ -38,9 +36,9 @@ platforms:
     transport:
       name: winrm
       elevated: true
-  - name: windows-2016
+  - name: windows-2025
     driver:
-      box: tas50/windows_2016
+      box: stromweld/windows-2025
       customize:
         memory: 4096
     provisioner:
@@ -48,19 +46,9 @@ platforms:
     transport:
       name: winrm
       elevated: true
-  - name: windows-2019
+  - name: macos-26
     driver:
-      box: tas50/windows_2019
-      customize:
-        memory: 4096
-    provisioner:
-      wait_for_retry: 300
-    transport:
-      name: winrm
-      elevated: true
-  - name: macos-10.15
-    driver:
-      box: tas50/macos_10.15
+      box: stromweld/macos-26
       customize:
         memory: 4096
 
@@ -69,9 +57,8 @@ suites:
     run_list:
       - recipe[test::default]
     excludes:
-      - windows-2012r2
-      - windows-2016
-      - windows-2019
+      - windows-2022
+      - windows-2025
   - name: license
     run_list:
       - recipe[test::license]
@@ -79,6 +66,12 @@ suites:
     # their original version to 15
     provisioner:
       product_version: '14'
+  - name: license_id
+    run_list:
+      - recipe[test::license_id]
+    attributes:
+      chef_client_updater:
+        license_id: 'free-79df705d-b685-419a-8b68-88401f74ff72-3999'
   - name: kill
     run_list:
       - recipe[test::kill]
@@ -94,20 +87,20 @@ suites:
   - name: direct_url
     run_list:
       - recipe[test::direct_url]
-    includes: centos-6
+    includes: almalinux-9
   - name: constrained
     run_list:
       - recipe[test::constrained]
-    includes: centos-6
+    includes: almalinux-9
   - name: noop
     run_list:
       - recipe[test::noop]
-    includes: centos-6
+    includes: almalinux-9
   - name: rubygems-url
     run_list:
       - recipe[test::gem_server]
       - recipe[test::rubygems_url]
-    includes: ubuntu-16.04
+    includes: ubuntu-24.04
     provisioner:
       product_version: 12.13.37
     verifier:

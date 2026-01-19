@@ -34,7 +34,7 @@ def load_mixlib_install
 rescue LoadError
   Chef::Log.info('mixlib-install gem not found. Installing now')
   chef_gem 'mixlib-install' do
-    version '~> 3.12'
+    version '~> 3.14'
     compile_time true if respond_to?(:compile_time) # cookstyle: disable ChefModernize/RespondToCompileTime
     if new_resource.rubygems_url
       clear_sources true if respond_to?(:clear_sources)
