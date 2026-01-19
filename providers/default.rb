@@ -699,6 +699,9 @@ action :update do
 
     if update_necessary?
       converge_by "upgrade #{new_resource.product_name} #{current_version} to #{desired_version}" do
+        # Log the download URL before installation
+        log_download_url
+        
         # we have to get the script from mixlib-install..
         install_script = mixlib_install.install_command
         # ...before we blow mixlib-install away

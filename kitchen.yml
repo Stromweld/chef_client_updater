@@ -4,7 +4,7 @@ driver:
 provisioner:
   name: chef_solo
   product_name: chef
-  product_version: '<%= ENV["CHEF_VERSION"] || "12.13.37" %>'
+  product_version: '<%= ENV["CHEF_VERSION"] || "18.5.0" %>'
   retry_on_exit_code:
     - 213
   max_retries: 1
@@ -26,6 +26,16 @@ platforms:
   - name: freebsd-15
   - name: ubuntu-22.04
   - name: ubuntu-24.04
+  - name: windows-11
+    driver:
+      box: stromweld/windows-11
+      customize:
+        memory: 4096
+    provisioner:
+      wait_for_retry: 300
+    transport:
+      name: winrm
+      elevated: true
   - name: windows-2022
     driver:
       box: stromweld/windows-2022
@@ -66,7 +76,7 @@ suites:
     # their original version to 15
     provisioner:
       product_version: '14'
-  - name: license_id
+  - name: license-id
     run_list:
       - recipe[test::license_id]
     attributes:
@@ -102,7 +112,7 @@ suites:
       - recipe[test::rubygems_url]
     includes: ubuntu-24.04
     provisioner:
-      product_version: 12.13.37
+      product_version: 18.5.0
     verifier:
       inspec_tests:
         - path: ./test/integration/default/

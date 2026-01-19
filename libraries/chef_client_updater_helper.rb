@@ -13,7 +13,29 @@ module ChefClientUpdaterHelper
       product_version: new_resource.version == 'latest' ? :latest : new_resource.version,
       install_command_options: new_resource.install_command_options,
     }
-    options[:license_id] = new_resource.license_id if new_resource.license_id
+
+    if new_resource.license_id
+      options[:license_id] = new_resource.license_id
+    else
+      Chef::Log.warn(
+        <<~WARN
+          =====================================================================================================
+          No license_id specified
+
+          Official chef builds require a license key to download.
+          Please add a license_id to the resource block.
+
+          For now we'll fall back to using omnitruck download url.
+
+          \e[1m\e[93m!!!WARNING!!! omnitruck urls are currently being shutdown for specific chef-client
+          versions and will stop working entirely in the future.
+          Please refer to this blog for schedule of which chef-client versions and when they will be affected:
+          https://www.chef.io/blog/decoding-the-change-progress-chef-is-moving-to-licensed-downloads\e[0m
+          =====================================================================================================
+        WARN
+      )
+    end
+
     options = add_download_url_override_options(options)
 
     Chef::Log.debug("Passing options to mixlib-install: #{options}")
@@ -27,5 +49,18 @@ module ChefClientUpdaterHelper
       options[:install_command_options] = options[:install_command_options].merge(download_url_override: new_resource.download_url_override, checksum: new_resource.checksum)
     end
     options
+  end
+
+  def log_download_url
+    return if new_resource.download_url_override
+
+    begin
+      artifact = Array(mixlib_install.artifact_info).first
+      if artifact && artifact.url
+        Chef::Log.debug("Package will be downloaded from: #{artifact.url}")
+      end
+    rescue => e
+      Chef::Log.debug("Unable to retrieve download URL: #{e.message}")
+    end
   end
 end
