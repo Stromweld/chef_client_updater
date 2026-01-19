@@ -14,27 +14,7 @@ module ChefClientUpdaterHelper
       install_command_options: new_resource.install_command_options,
     }
 
-    if new_resource.license_id
-      options[:license_id] = new_resource.license_id
-    else
-      Chef::Log.warn(
-        <<~WARN
-          =====================================================================================================
-          No license_id specified
-
-          Official chef builds require a license key to download.
-          Please add a license_id to the resource block.
-
-          For now we'll fall back to using omnitruck download url.
-
-          \e[1m\e[93m!!!WARNING!!! omnitruck urls are currently being shutdown for specific chef-client
-          versions and will stop working entirely in the future.
-          Please refer to this blog for schedule of which chef-client versions and when they will be affected:
-          https://www.chef.io/blog/decoding-the-change-progress-chef-is-moving-to-licensed-downloads\e[0m
-          =====================================================================================================
-        WARN
-      )
-    end
+    options[:license_id] = new_resource.license_id if new_resource.license_id
 
     options = add_download_url_override_options(options)
 
