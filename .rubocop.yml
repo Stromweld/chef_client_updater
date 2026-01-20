@@ -1,2 +1,4 @@
+---
 AllCops:
-  TargetChefVersion: 11
+  Exclude:
+    - "vendor/**/*"

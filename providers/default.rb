@@ -696,7 +696,7 @@ end
 action :update do
   begin
     load_prerequisites!
-    
+
     # Display license_id warning early, before checking if update is necessary
     unless new_resource.license_id || new_resource.download_url_override
       Chef::Log.warn(
@@ -722,7 +722,7 @@ action :update do
       converge_by "upgrade #{new_resource.product_name} #{current_version} to #{desired_version}" do
         # Log the download URL before installation
         log_download_url
-        
+
         # we have to get the script from mixlib-install..
         install_script = mixlib_install.install_command
         # ...before we blow mixlib-install away

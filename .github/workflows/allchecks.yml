@@ -1,0 +1,20 @@
+---
+name: All checks pass
+"on":
+  workflow_call:
+
+permissions:
+  contents: read
+  checks: read
+
+jobs:
+  allchecks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: wechuli/allcheckspassed@v1
+        with:
+          # This seems to be working lately even for external
+          # contributors, so maybe we don't need to exclude it?
+          checks_exclude: "SonarCloud Code Analysis"
+          # Retry every minute for 30 minutes...
+          retries: 30

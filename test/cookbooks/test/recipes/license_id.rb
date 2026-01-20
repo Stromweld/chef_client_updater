@@ -1,4 +1,4 @@
-chef_client_updater "Install Chef latest via trial api" do
+chef_client_updater 'Install Chef latest via trial api' do
   channel 'stable'
   version 'latest'
   post_install_action 'exec'
