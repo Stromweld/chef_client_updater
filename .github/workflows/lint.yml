@@ -15,14 +15,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.4
-          bundler-cache: true
-      - uses: r7kamura/rubocop-problem-matchers-action@v1
+      - name: Install Chef
+        uses: actionshub/chef-install@3.0.1
       - name: Cook Style
-        run: bundle exec cookstyle --chefstyle
+        run: cookstyle
 
   yamllint:
     runs-on: ubuntu-latest

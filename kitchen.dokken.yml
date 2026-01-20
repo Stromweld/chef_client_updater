@@ -2,7 +2,7 @@
 # TAS50: THIS IS NOT A TYPICAL STANDARD DOKKEN KITCHEN FILE
 driver:
   name: dokken
-  privileged: true # because Docker and SystemD/Upstart
+  privileged: true  # because Docker and SystemD/Upstart
   chef_version: 18.5.0
 
 transport:

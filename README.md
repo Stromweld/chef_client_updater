@@ -18,14 +18,42 @@ This cookbook updates the Chef Infra Client
 
 This cookbook provides both a custom resource and a default recipe. The default recipe simply uses the custom resource with a set of attributes. You can add chef_client_updater::default to your run list or use the custom resource in a wrapper cookbook.
 
+### License Key Requirement
+
+**IMPORTANT:** As of recent Chef releases, official Chef Infra Client builds require a license key to download from the commercial API. Without a license key, the cookbook will fall back to using the omnitruck API, which is being phased out and will eventually stop working.
+
+You can provide a license key in several ways:
+
+1. **Environment Variable** (recommended for Test Kitchen and CI/CD):
+
+   ```bash
+   export CHEF_LICENSE_KEY='your-license-id'
+   ```
+
+2. **Node Attribute**:
+
+   ```ruby
+   node.default['chef_client_updater']['license_id'] = 'your-license-id'
+   ```
+
+3. **Resource Property**:
+
+   ```ruby
+   chef_client_updater 'update' do
+     license_id 'your-license-id'
+   end
+   ```
+
+For trial licenses, use a license_id that starts with `free-` or `trial-`. For more information about licensing and obtaining a license key, visit the [Chef licensing documentation](https://www.chef.io/blog/decoding-the-change-progress-chef-is-moving-to-licensed-downloads).
+
 ### Init System Caveats
 
 When Chef Infra Client runs as a service under a system init daemon such as Sys-V or systemd each Chef Infra Client run forks off from the main chef-client process being managed by the init system. For a Chef Infra Client upgrade to occur, the running Chef Infra Client as well as the parent process must be killed, and a new Chef Infra Client must start using the updated binaries. This cookbook handles killing the chef-client process, but your init system must properly handle starting the service back up. For systemd this can be handled via configuration, and the chef-client cookbook 8.1.1 or later handles this by default. This functionality is not available in sys-v (RHEL 6, AIX, and older platforms).
 
 For systems where the init system will not properly handle starting the service back up automatically (like Sys-V or SRC) this cookbook will attempt to restart the service via a temporary cron job when either of the following conditions are met:
 
-- node['chef_client']['init_style'] == 'init'
-- node['chef_client_updater']['restart_chef_via_cron'] == true
+- `node['chef_client']['init_style'] == 'init'`
+- `node['chef_client_updater']['restart_chef_via_cron'] == true`
 
 ### Updating Windows Nodes
 
@@ -91,11 +119,9 @@ when upgrading to Chef Infra Client 15 or higher.
 
 ## Resources
 
-### chef_client_updater
-
 Installs the mixlib-install/mixlib-install gems and upgrades the Chef Infra Client.
 
-#### properties
+### properties
 
 - `channel` - The chef channel you fetch the Chef Infra Client from. `stable` contains all officially released Chef Infra Client builds where as `current` contains unreleased builds. Default: `stable`
 - `prevent_downgrade` - Don't allow this cookbook to downgrade the Chef Infra Client version. Default: `false`
@@ -109,32 +135,123 @@ Installs the mixlib-install/mixlib-install gems and upgrades the Chef Infra Clie
 - `upgrade_delay` - The delay in seconds before the scheduled task to upgrade Chef Infra Client runs on windows. Default: `60`. Lowering this limit is not recommended.
 - `product_name` - The name of the product to upgrade. This can be `chef`, `chefdk`, or `cinc`. Default: `chef`
 - `install_command_options` - A Hash of additional options that will be passed to the Mixlib::Install instance responsible for installing the given product_name. To install Chef Infra Client as a scheduled task on windows, one can pass `{daemon: 'task'}`. Default: `{}`
-- `rubygems_url` - The location to source rubygems. Default: https://www.rubygems.org
-- `handle_zip_download_url` - Url to the Handle zip archive used by Windows. Used to override the default in airgapped environments. Default: https://download.sysinternals.com/files/Handle.zip (Note that you can also override the `default['chef_client_updater']['handle_exe_path']` attribute if you already have that binary somewhere on your system)
+- `rubygems_url` - The location to source rubygems. Default: <https://www.rubygems.org>
+- `handle_zip_download_url` - Url to the Handle zip archive used by Windows. Used to override the default in airgapped environments. Default: <https://download.sysinternals.com/files/Handle.zip> (Note that you can also override the `default['chef_client_updater']['handle_exe_path']` attribute if you already have that binary somewhere on your system)
 - `event_log_service_restart` - Whether the Event Log Service on Windows should be restarted to release any locked files. Default: `true`
-- `install_command_options` - Additional parameters to pass to the [mixlib-install script](https://github.com/chef/mixlib-install/tree/main#install-scripts). Default: `{}`
-- `license_id` - License ID for accessing commercial or trial API downloads. This is passed to mixlib-install to authenticate against the commercial API endpoints. Default: `nil`
+- `license_id` - **License ID for accessing commercial or trial API downloads.** This is passed to mixlib-install to authenticate against the commercial API endpoints. Can be set via the `CHEF_LICENSE_KEY` environment variable. **Required for downloading official Chef builds.** Default: `ENV['CHEF_LICENSE_KEY']`
 
 #### examples
 
+**Basic usage with license_id:**
+
 ```ruby
+chef_client_updater 'Install latest' do
+  license_id 'your-license-id'
+end
+```
+
+**Using environment variable (recommended for Test Kitchen):**
+
+```ruby
+# License is automatically picked up from CHEF_LICENSE_KEY environment variable
 chef_client_updater 'Install latest'
 ```
+
+**Install specific version with trial license:**
 
 ```ruby
 chef_client_updater 'Install latest Chef Infra Client 16.x' do
   version '16'
+  license_id 'trial-your-trial-id'
 end
 ```
+
+**Install specific version with license:**
 
 ```ruby
 chef_client_updater 'Install 12.13.36 and kill' do
   version '12.13.36'
   post_install_action 'kill'
+  license_id 'your-license-id'
 end
 ```
 
+**Air-gapped environment (no license_id needed):**
+
+```ruby
+chef_client_updater 'Install from local mirror' do
+  download_url_override 'https://internal-mirror.example.com/chef-client.deb'
+  checksum 'abc123...'
+  version '18.0.0'
+end
+```
+
+### Using Attributes
+
+You can also configure the cookbook using node attributes in a wrapper cookbook or role:
+
+```ruby
+# Set license_id via attribute
+node.default['chef_client_updater']['license_id'] = 'your-license-id'
+
+# Or use the environment variable (automatically picked up)
+# CHEF_LICENSE_KEY='your-license-id'
+
+# Configure other options
+node.default['chef_client_updater']['channel'] = 'stable'
+node.default['chef_client_updater']['version'] = 'latest'
+node.default['chef_client_updater']['post_install_action'] = 'kill'
+
+# Then include the default recipe
+include_recipe 'chef_client_updater::default'
+```
+
+### Warning Messages
+
+If no `license_id` is provided and no `download_url_override` is specified, the cookbook will display a warning on every chef-client run:
+
+```plaintext
+=====================================================================================================
+No license_id specified
+
+Official chef builds require a license key to download.
+Please add a license_id to the resource block.
+
+For now we'll fall back to using omnitruck download url.
+
+!!!WARNING!!! omnitruck urls are currently being shutdown for specific chef-client
+versions and will stop working entirely in the future.
+Please refer to this blog for schedule of which chef-client versions and when they will be affected:
+https://www.chef.io/blog/decoding-the-change-progress-chef-is-moving-to-licensed-downloads
+=====================================================================================================
+```
+
+This warning is informational and the cookbook will still attempt to download from the omnitruck API, but users should migrate to using license keys as soon as possible.
+
 #### Test Kitchen Testing
+
+**Important:** Set the `CHEF_LICENSE_KEY` environment variable before running Test Kitchen to avoid warnings and ensure packages can be downloaded:
+
+```bash
+export CHEF_LICENSE_KEY='your-license-id'
+kitchen test
+```
+
+Or set it in your `.kitchen.yml`:
+
+```yaml
+provisioner:
+  name: chef_zero
+
+driver:
+  name: vagrant
+
+suites:
+  - name: default
+    attributes:
+      chef_client_updater:
+        license_id: <%= ENV['CHEF_LICENSE_KEY'] %>
+```
 
 In order to test this cookbook it will be necessary to change the `post_install_action` to `exec` from `kill`. While `kill` is better in most actual production use cases as it terminates the chef-client run along with cleaning up the parent process, the use of `kill` under test kitchen will fail the chef-client run and fail the test-kitchen run. The use of `exec` allows test-kitchen to complete and then re-runs the recipe to validate that the cookbook does not attempt to re-update the chef-client and will succeed with the new chef-client. This, however, means that it is not possible to exactly test the config which will be running in production. The best practice advice for this cookbook will be to ignore common best practices and not worry about that. If you change your production config to use `exec` in order to run what you test in test-kitchen, then you will find sharp edge cases where your production upgrades will hang and/or fail, which testing will not replicate. In order to test you should most likely test upgrades on your full-scale integration environment (not under test-kitchen) before rolling out to production and not use test-kitchen at all. If you think that there's a rule that you must test absolutely everything you run under test-kitchen, you should probably [read this](http://labs.ig.com/code-coverage-100-percent-tragedy) or [this](https://coderanger.net/overtesting/).
 
