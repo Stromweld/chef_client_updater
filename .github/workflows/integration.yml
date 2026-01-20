@@ -11,6 +11,8 @@ concurrency:
 
 jobs:
   integration:
+    env:
+      KITCHEN_LOCAL_YAML: kitchen.dokken.yml
     runs-on: ubuntu-latest
     strategy:
       matrix:
