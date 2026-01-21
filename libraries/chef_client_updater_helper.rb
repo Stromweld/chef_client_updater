@@ -32,8 +32,6 @@ module ChefClientUpdaterHelper
   end
 
   def log_download_url
-    return if new_resource.download_url_override
-
     begin
       artifact = Array(mixlib_install.artifact_info).first
       if artifact && artifact.url

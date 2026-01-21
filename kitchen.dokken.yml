@@ -7,7 +7,6 @@ driver:
 
 provisioner:
   name: dokken
-  chef_log_level: debug
   deprecations_as_errors: true
   chef_license: accept-no-persist
 

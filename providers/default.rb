@@ -709,10 +709,10 @@ action :update do
 
           For now we'll fall back to using omnitruck download url.
 
-          \e[1m\e[93m!!!WARNING!!! omnitruck urls are currently being shutdown for specific chef-client
+          \e[1m\e[93m!!!WARNING!!!\e[0m omnitruck urls are currently being shutdown for specific chef-client
           versions and will stop working entirely in the future.
           Please refer to this blog for schedule of which chef-client versions and when they will be affected:
-          https://www.chef.io/blog/decoding-the-change-progress-chef-is-moving-to-licensed-downloads\e[0m
+          https://www.chef.io/blog/decoding-the-change-progress-chef-is-moving-to-licensed-downloads
           =====================================================================================================
         WARN
       )
