@@ -29,4 +29,5 @@ chef_client_updater 'update chef-client' do
   handle_zip_download_url node['chef_client_updater']['handle_zip_download_url'] if node['chef_client_updater']['handle_zip_download_url']
   event_log_service_restart node['chef_client_updater']['event_log_service_restart']
   rubygems_url node['chef_client_updater']['rubygems_url'] if node['chef_client_updater']['rubygems_url']
+  license_id node['chef_client_updater']['license_id'] if node['chef_client_updater']['license_id']
 end
