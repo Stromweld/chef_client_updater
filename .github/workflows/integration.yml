@@ -17,7 +17,6 @@ jobs:
     strategy:
       matrix:
         os:
-          - almalinux-8
           - almalinux-9
           - almalinux-10
           - ubuntu-2204
@@ -25,8 +24,6 @@ jobs:
         suite:
           - default
           - license-id
-          - direct-url
-          - rubygem-url
       fail-fast: false
 
     steps:

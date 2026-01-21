@@ -67,9 +67,6 @@ suites:
   - name: default
     run_list:
       - recipe[test::default]
-    excludes:
-      - windows-2022
-      - windows-2025
   - name: license
     run_list:
       - recipe[test::license]
