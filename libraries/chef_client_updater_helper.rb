@@ -37,7 +37,7 @@ module ChefClientUpdaterHelper
     begin
       artifact = Array(mixlib_install.artifact_info).first
       if artifact && artifact.url
-        Chef::Log.debug("Package will be downloaded from: #{artifact.url}")
+        Chef::Log.info("Package will be downloaded from: #{artifact.url.split('?').first}")
       end
     rescue => e
       Chef::Log.debug("Unable to retrieve download URL: #{e.message}")
