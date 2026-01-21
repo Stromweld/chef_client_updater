@@ -33,4 +33,4 @@ jobs:
         uses: actionshub/chef-install@3.0.1
       - name: Kitchen Test
         run: |
-          kitchen verify ${{ matrix.suite }}-${{ matrix.os }}
+          kitchen verify ${{ matrix.suite }}-${{ matrix.os }} -l debug
