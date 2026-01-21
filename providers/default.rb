@@ -29,7 +29,7 @@ use_inline_resources # cookstyle: disable ChefDeprecations/UseInlineResourcesDef
 provides :chef_client_updater if respond_to?(:provides) # cookstyle: disable ChefModernize/RespondToProvides
 
 def load_mixlib_install
-  gem 'mixlib-install', '~> 3.12'
+  gem 'mixlib-install', '~> 3.14'
   require 'mixlib/install'
 rescue LoadError
   Chef::Log.info('mixlib-install gem not found. Installing now')
