@@ -1,6 +1,6 @@
 describe command('chef-client -v') do
-  target_version = '13.10.0'
-  its('stdout') { should match "^Chef: #{target_version}" }
+  target_version = '18.9.4'
+  its('stdout') { should match "^Chef Infra Client: #{target_version}" }
 end
 
 describe command('/opt/chef/embedded/bin/gem -v') do

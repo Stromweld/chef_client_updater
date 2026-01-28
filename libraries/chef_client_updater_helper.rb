@@ -13,6 +13,9 @@ module ChefClientUpdaterHelper
       product_version: new_resource.version == 'latest' ? :latest : new_resource.version,
       install_command_options: new_resource.install_command_options,
     }
+
+    options[:license_id] = new_resource.license_id if new_resource.license_id
+
     options = add_download_url_override_options(options)
 
     Chef::Log.debug("Passing options to mixlib-install: #{options}")
@@ -26,5 +29,16 @@ module ChefClientUpdaterHelper
       options[:install_command_options] = options[:install_command_options].merge(download_url_override: new_resource.download_url_override, checksum: new_resource.checksum)
     end
     options
+  end
+
+  def log_download_url
+    begin
+      artifact = Array(mixlib_install.artifact_info).first
+      if artifact && artifact.url
+        Chef::Log.info("Package will be downloaded from: #{artifact.url.split('?').first}")
+      end
+    rescue => e
+      Chef::Log.debug("Unable to retrieve download URL: #{e.message}")
+    end
   end
 end

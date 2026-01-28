@@ -1,1 +1,1 @@
-default['chef_client_updater']['version'] = '13.10.0'
+default['chef_client_updater']['version'] = '18.9.4'
