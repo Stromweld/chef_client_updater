@@ -2,7 +2,11 @@
 
 This file is used to list changes made in each version of the chef_client_updater cookbook.
 
-## 3.13.0 (2206-01-19)
+## 3.13.1 (2026-01-28)
+
+- Fixed the issue with failure to restart Windows EventLog Service
+
+## 3.13.0 (2026-01-19)
 
 - Added license_id to resource for mixlib-install 3.14.0 support of new chef downloads api requiring license key for chef-client downloads
 

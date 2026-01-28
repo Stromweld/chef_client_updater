@@ -506,14 +506,25 @@ def event_log_ps_code
                         Where-Object Status -eq 'Running' | Select-Object -ExpandProperty Name
       # Attempt to preemptively stop Dependent Services
       $depsvcsrunning | ForEach-Object {
-        Stop-Service -Name "$_" -Force -ErrorAction SilentlyContinue
+        $depsvc = $_
+        try {
+          Stop-Service -Name "$($depsvc)" -Force -ErrorAction Stop
+        } catch {
+          $process='svchost.exe'
+          $data = Get-CimInstance Win32_Process -Filter "name = '$process'" | Select-Object ProcessId, CommandLine |
+                  Where-Object {$_.CommandLine -Match "$($depsvc)"}
+          $data = $data.ProcessId
+          Stop-Process -Id $data -Force
+          Start-Sleep -Seconds 3
+        }
       }
       # Stop EventLog Service - First Politely, then Forcibly
       try {
         Stop-Service -Name 'EventLog' -Force -ErrorAction Stop
       } catch {
         $process='svchost.exe'
-        $data = Get-CimInstance Win32_Process -Filter "name = '$process'" | Select-Object ProcessId, CommandLine | Where-Object {$_.CommandLine -Match "LocalServiceNetworkRestricted"}
+        $data = Get-CimInstance Win32_Process -Filter "name = '$process'" | Select-Object ProcessId, CommandLine |
+                Where-Object {$_.CommandLine -Match "LocalServiceNetworkRestricted"}
         $data = $data.ProcessId
         Stop-Process -Id $data -Force
         Start-Sleep -Seconds 10

@@ -37,7 +37,7 @@ describe 'chef_client_updater resource' do
     context 'when license_id is provided' do
       before do
         allow_any_instance_of(Object).to receive(:update_necessary?).and_return(false)
-        chef_run.node.normal['chef_client_updater']['license_id'] = 'test-license-123'
+        chef_run.node.default['chef_client_updater']['license_id'] = 'test-license-123'
       end
 
       it 'does not log a warning about missing license_id' do
