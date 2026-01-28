@@ -504,7 +504,6 @@ def event_log_ps_code
       # Get Dependent Services for Eventlog that are running
       $depsvcsrunning = Get-Service -Name 'EventLog' | Select-Object -ExpandProperty DependentServices |
                         Where-Object Status -eq 'Running' | Select-Object -ExpandProperty Name
-      
       # Attempt to preemptively stop Dependent Services
       $depsvcsrunning | ForEach-Object {
         $depsvc = $_
@@ -519,7 +518,6 @@ def event_log_ps_code
           Start-Sleep -Seconds 3
         }
       }
-      
       # Stop EventLog Service - First Politely, then Forcibly
       try {
         Stop-Service -Name 'EventLog' -Force -ErrorAction Stop
@@ -531,13 +529,11 @@ def event_log_ps_code
         Stop-Process -Id $data -Force
         Start-Sleep -Seconds 10
       }
-      
       # Restart EventLog Service, if Not AutoStarted
       $evtlogstate = Get-Service -Name 'EventLog'
       if ($evtlogstate.Status -eq 'Stopped') {
         Start-Service -Name 'EventLog'
       }
-      
       # Restart Dependent Services - if Stopped
       $depsvcsrunning | ForEach-Object {
         $svcstate = Get-Service -Name "$_"
