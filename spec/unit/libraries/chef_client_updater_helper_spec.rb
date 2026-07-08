@@ -12,7 +12,7 @@ describe ChefClientUpdaterHelper do
   let(:resource) do
     double('Chef::Resource::ChefClientUpdater',
                           product_name: product_name, channel: channel, version: product_version, install_command_options: install_command_options,
-                          download_url_override: download_url_override, checksum: checksum)
+                          download_url_override: download_url_override, checksum: checksum, license_id: nil)
   end
   let(:platform) { 'aix' }
   let(:platform_version) { '4.5' }
@@ -103,6 +103,66 @@ describe ChefClientUpdaterHelper do
           provider.add_download_url_override_options(options)
           expect(options[:install_command_options][:download_url_override]).to eq(download_url_override)
           expect(options[:install_command_options][:checksum]).to eq(checksum)
+        end
+      end
+
+      describe '#validate_package_availability' do
+        let(:artifact) { double('artifact', url: 'https://packages.chef.io/files/stable/chef/pkg.rpm?token=123', version: '18.6.2') }
+        let(:mixlib_instance) { double('mixlib_instance', artifact_info: [artifact]) }
+
+        before do
+          allow(provider).to receive(:mixlib_install).and_return(mixlib_instance)
+          allow(provider).to receive(:windows?).and_return(false)
+        end
+
+        it 'logs package validation details and returns true on non-windows platforms' do
+          expect(Chef::Log).to receive(:info).with('Package validation: chef-client 18.6.2 will be downloaded from https://packages.chef.io/files/stable/chef/pkg.rpm')
+          expect(provider).not_to receive(:validate_windows_package_availability)
+          expect(provider.validate_package_availability).to be true
+        end
+
+        it 'validates package availability on windows platforms' do
+          allow(provider).to receive(:windows?).and_return(true)
+          expect(provider).to receive(:validate_windows_package_availability).with(artifact).and_return(true)
+          expect(provider.validate_package_availability).to be true
+        end
+
+        context 'when no artifact is returned' do
+          let(:mixlib_instance) { double('mixlib_instance', artifact_info: []) }
+
+          it 'warns and returns false' do
+            expect(Chef::Log).to receive(:warn).with(/Unable to retrieve package information/)
+            expect(provider.validate_package_availability).to be false
+          end
+        end
+
+        context 'when artifact url is missing' do
+          let(:artifact) { double('artifact', url: '', version: '18.6.2') }
+
+          it 'warns and returns false' do
+            expect(Chef::Log).to receive(:warn).with(/No download URL available/)
+            expect(provider.validate_package_availability).to be false
+          end
+        end
+      end
+
+      describe '#validate_windows_package_availability' do
+        let(:artifact) { double('artifact', url: 'https://packages.chef.io/files/stable/chef/pkg.msi?token=123', version: '18.6.2') }
+        let(:http_client) { double('Chef::HTTP::Simple') }
+
+        before do
+          allow(Chef::HTTP::Simple).to receive(:new).with(artifact.url).and_return(http_client)
+        end
+
+        it 'returns true when the HEAD request succeeds' do
+          allow(http_client).to receive(:head).with('').and_return(nil)
+          expect(provider.validate_windows_package_availability(artifact)).to be true
+        end
+
+        it 'warns and returns false on network failure' do
+          allow(http_client).to receive(:head).with('').and_raise(StandardError.new('temporary network failure'))
+          expect(Chef::Log).to receive(:warn).with(/Package availability check failed/)
+          expect(provider.validate_windows_package_availability(artifact)).to be false
         end
       end
     end

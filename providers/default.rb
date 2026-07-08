@@ -124,7 +124,7 @@ def current_version
     # There is a verbiage change in newer version of Chef Infra
     version = versions.match(/(ChefDK Version(.)*:)\s*([\d.]+)/i) || versions.match(/(Chef Development Kit Version(.)*:)\s*([\d.]+)/i)
 
-    return version[-1].to_s.strip if version
+    version.last.to_s.strip if version
   end
 end
 
@@ -630,7 +630,7 @@ def execute_install_script(install_script)
           Remove-Item "#{windows_upgrade_script}"
           c:/windows/system32/schtasks.exe /delete /f /tn '#{scheduled_task_name}'
 
-          $enforceLicense = $#{enforce_license.to_s}
+          $enforceLicense = $#{enforce_license}
 
           if ($enforceLicense -eq $true) {
 
@@ -685,7 +685,7 @@ def license_acceptance!
     return
   end
 
-  license_acceptance = shell_out("#{chef_install_dir}/bin/chef-apply -e 'exit 0'", timeout: 60, environment: { 'CHEF_LICENSE' => "#{node['chef_client']['chef_license']}" })
+  license_acceptance = shell_out("#{chef_install_dir}/bin/chef-apply -e 'exit 0'", timeout: 60, environment: { 'CHEF_LICENSE' => node['chef_client']['chef_license'].to_s })
 
   unless license_acceptance.error?
     Chef::Log.debug 'Successfully accepted license.'
@@ -746,6 +746,9 @@ action :update do
     end
 
     if update_necessary?
+      # Validate before any destructive operations; return early to let other cookbooks continue
+      return unless validate_package_availability
+
       converge_by "upgrade #{new_resource.product_name} #{current_version} to #{desired_version}" do
         # Log the download URL before installation
         log_download_url
