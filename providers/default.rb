@@ -614,7 +614,19 @@ def execute_install_script(install_script)
 
           Write-Output "Running product install script..."
           try {
+            # Reset $LASTEXITCODE to $null before invoking the install script so that any
+            # non-zero exit code left behind by #{uninstall_if_necessary} (e.g. msiexec /x)
+            # does not produce a false positive on the check below.
+            $LASTEXITCODE = $null
             #{install_script}
+            # PowerShell's try/catch only catches *terminating* errors. External programs
+            # such as msiexec.exe signal failure via a non-zero exit code, not by throwing
+            # an exception, so a failed install would otherwise silently fall through and
+            # leave the node in an indeterminate state. Explicitly convert a non-zero exit
+            # code into a terminating error so the catch block fires and the rollback runs.
+            if ($LASTEXITCODE -ne $null -and $LASTEXITCODE -ne 0) {
+              throw "Install script exited with non-zero exit code: $LASTEXITCODE"
+            }
           }
           catch {
             Write-Output "An error occurred while trying to install product"

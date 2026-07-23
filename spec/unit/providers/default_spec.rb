@@ -1,5 +1,12 @@
 require 'spec_helper'
 
+# NOTE: The Windows upgrade path in execute_install_script (the powershell_script resource
+# rendered via .run_action(:run)) cannot be meaningfully unit tested here because ChefSpec
+# does not intercept immediate run_action calls. Behavioral coverage for the Windows
+# $LASTEXITCODE exit-code check and rollback path requires a Windows Test Kitchen suite
+# that converges with a mock install script that exits non-zero and then asserts the
+# backup directory was restored. See kitchen.yml for the existing Linux suites.
+
 describe 'chef_client_updater provider' do
   platform 'ubuntu', '22.04'
 
