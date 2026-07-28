@@ -36,8 +36,10 @@ describe 'chef_client_updater resource' do
   describe 'license_id parameter' do
     # Set attributes in the runner block (not in before) so they are guaranteed to be
     # present when the recipe is compiled during converge.
-    # Stub update_necessary? via Chef::Provider (the LWRP base class) to avoid needing
-    # mixlib-install network calls when license_id is set.
+    # Stub mixlib_install at the ChefClientUpdaterHelper level (where desired_version lives)
+    # to return a fake artifact matching the current version, so update_necessary? returns
+    # false without making any real HTTP calls. allow_any_instance_of(Chef::Provider) cannot
+    # stub methods defined on the LWRP subclass itself.
     context 'when license_id is provided' do
       let(:chef_run) do
         ChefSpec::SoloRunner.new(platform: 'ubuntu', version: '22.04', step_into: ['chef_client_updater']) do |node|
@@ -48,7 +50,11 @@ describe 'chef_client_updater resource' do
       end
 
       before do
-        allow_any_instance_of(Chef::Provider).to receive(:update_necessary?).and_return(false)
+        fake_artifact = double('artifact', version: '18.0.0', url: 'https://example.com/chef.rpm')
+        fake_mixlib = double('Mixlib::Install', artifact_info: [fake_artifact])
+        allow_any_instance_of(ChefClientUpdaterHelper).to receive(:load_mixlib_install)
+        allow_any_instance_of(ChefClientUpdaterHelper).to receive(:load_mixlib_versioning)
+        allow_any_instance_of(ChefClientUpdaterHelper).to receive(:mixlib_install).and_return(fake_mixlib)
       end
 
       it 'does not log a warning about missing license_id' do
@@ -63,10 +69,6 @@ describe 'chef_client_updater resource' do
           node.normal['chef_client_updater']['version'] = '18.0.0'
           node.automatic['chef_packages'] = { 'chef' => { 'version' => '18.0.0' } }
         end
-      end
-
-      before do
-        allow_any_instance_of(Chef::Provider).to receive(:update_necessary?).and_return(false)
       end
 
       it 'logs a warning about missing license_id' do
