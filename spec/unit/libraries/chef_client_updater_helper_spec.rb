@@ -184,12 +184,12 @@ describe ChefClientUpdaterHelper do
       before { allow(resource).to receive(:version).and_return('latest') }
 
       it 'resolves to the last value from available_versions' do
-        allow(mixlib_instance).to receive(:available_versions).and_return(%w[18.10.17 18.11.11])
+        allow(mixlib_instance).to receive(:available_versions).and_return(%w(18.10.17 18.11.11))
         expect(provider.desired_version).to eq('18.11.11')
       end
 
       it 'does not call artifact_info' do
-        allow(mixlib_instance).to receive(:available_versions).and_return(%w[18.11.11])
+        allow(mixlib_instance).to receive(:available_versions).and_return(%w(18.11.11))
         expect(mixlib_instance).not_to receive(:artifact_info)
         provider.desired_version
       end
