@@ -167,4 +167,91 @@ describe ChefClientUpdaterHelper do
       end
     end
   end
+
+  describe '#desired_version' do
+    let(:mixlib_instance) { double('Mixlib::Install') }
+    let(:versioning) { double('Mixlib::Versioning') }
+
+    before do
+      allow(provider).to receive(:mixlib_install).and_return(mixlib_instance)
+      allow(provider).to receive(:load_mixlib_versioning)
+      stub_const('Mixlib::Versioning', versioning)
+      allow(versioning).to receive(:parse) { |v| v }
+      allow(Chef::Log).to receive(:debug)
+    end
+
+    context 'when version is :latest' do
+      before { allow(resource).to receive(:version).and_return('latest') }
+
+      it 'resolves to the last value from available_versions' do
+        allow(mixlib_instance).to receive(:available_versions).and_return(%w[18.10.17 18.11.11])
+        expect(provider.desired_version).to eq('18.11.11')
+      end
+
+      it 'does not call artifact_info' do
+        allow(mixlib_instance).to receive(:available_versions).and_return(%w[18.11.11])
+        expect(mixlib_instance).not_to receive(:artifact_info)
+        provider.desired_version
+      end
+    end
+
+    context 'when version is X.Y.Z and license_id is nil' do
+      before do
+        allow(resource).to receive(:version).and_return('18.10.17')
+        allow(resource).to receive(:download_url_override).and_return(nil)
+        allow(resource).to receive(:license_id).and_return(nil)
+      end
+
+      it 'returns the requested version without calling the API' do
+        expect(mixlib_instance).not_to receive(:artifact_info)
+        expect(provider.desired_version).to eq('18.10.17')
+      end
+    end
+
+    context 'when version is X.Y.Z and license_id is set (Trial API scenario)' do
+      let(:artifact) { double('artifact', version: '18.11.11') }
+
+      before do
+        allow(resource).to receive(:version).and_return('18.10.17')
+        allow(resource).to receive(:download_url_override).and_return(nil)
+        allow(resource).to receive(:license_id).and_return('free-trial-key')
+        allow(mixlib_instance).to receive(:artifact_info).and_return([artifact])
+      end
+
+      it 'resolves through artifact_info to reflect what the Trial API will actually install' do
+        expect(provider.desired_version).to eq('18.11.11')
+      end
+
+      it 'does not return the originally-requested version' do
+        expect(provider.desired_version).not_to eq('18.10.17')
+      end
+    end
+
+    context 'when version is a short format (not X.Y.Z) without license_id' do
+      let(:artifact) { double('artifact', version: '18.11.11') }
+
+      before do
+        allow(resource).to receive(:version).and_return('18')
+        allow(resource).to receive(:download_url_override).and_return(nil)
+        allow(resource).to receive(:license_id).and_return(nil)
+        allow(mixlib_instance).to receive(:artifact_info).and_return([artifact])
+      end
+
+      it 'resolves through artifact_info to find the full X.Y.Z version' do
+        expect(provider.desired_version).to eq('18.11.11')
+      end
+    end
+
+    context 'when download_url_override is set' do
+      before do
+        allow(resource).to receive(:version).and_return('18.10.17')
+        allow(resource).to receive(:download_url_override).and_return('https://example.com/chef.rpm')
+      end
+
+      it 'uses the specified version directly without calling the API' do
+        expect(mixlib_instance).not_to receive(:artifact_info)
+        expect(provider.desired_version).to eq('18.10.17')
+      end
+    end
+  end
 end

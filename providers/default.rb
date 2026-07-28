@@ -128,31 +128,6 @@ def current_version
   end
 end
 
-# the version we WANT TO INSTALL. If the user specifies a version in X.Y.X format
-# we use that without looking it up. If :latest or a non-X.Y.Z format version we
-# look it up with mixlib-install to determine the latest version matching the request.
-# When license_id is set we always resolve via the API because the Trial API only
-# supports 'latest' and silently overrides any specific version — skipping the lookup
-# would cause update_necessary? to return true on every run once the latest is installed.
-# @return Mixlib::Versioning::Format::PartialSemVer
-def desired_version
-  if new_resource.version.to_sym == :latest # we need to find what :latest really means
-    version = Mixlib::Versioning.parse(mixlib_install.available_versions.last)
-    Chef::Log.debug("User specified version of :latest. Looking up using mixlib-install. Value maps to #{version}.")
-  elsif new_resource.download_url_override # probably in an air-gapped environment.
-    version = Mixlib::Versioning.parse(new_resource.version)
-    Chef::Log.debug("download_url_override specified. Using specified version of #{version}")
-  elsif new_resource.version.split('.').count == 3 && !new_resource.license_id # X.Y.Z version format given, no API override possible
-    Chef::Log.debug("User specified version of #{new_resource.version}. No need check this against Chef servers.")
-    version = Mixlib::Versioning.parse(new_resource.version)
-  else # lookup their version to find the actual X.Y.Z version the API will provide
-    artifact = Array(mixlib_install.artifact_info).first
-    version = Mixlib::Versioning.parse(artifact.version)
-    Chef::Log.debug("User specified version of #{new_resource.version}. Looking up using mixlib-install. Value maps to #{version}.")
-  end
-  version
-end
-
 # why wouldn't we use the built in update_available? method in mixlib-install?
 # well that would use current_version from mixlib-install and it has no
 # concept of preventing downgrades
