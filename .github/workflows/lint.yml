@@ -20,6 +20,18 @@ jobs:
       - name: Cook Style
         run: cookstyle
 
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Install Chef
+        uses: actionshub/chef-install@3.0.1
+      - name: Run unit tests
+        env:
+          CHEF_LICENSE: accept-no-persist
+        run: chef exec rspec spec/ --format documentation
+
   yamllint:
     runs-on: ubuntu-latest
     steps:

@@ -71,4 +71,30 @@ module ChefClientUpdaterHelper
     Chef::Log.warn("Package availability check failed, skipping upgrade: #{e.message}")
     false
   end
+
+  # The version we WANT TO INSTALL. If the user specifies a version in X.Y.Z format
+  # we use that without looking it up — UNLESS license_id is set, in which case the
+  # Trial API silently overrides any specific version to 'latest'. In that case we must
+  # resolve through artifact_info so desired_version reflects what will actually be
+  # installed (preventing an infinite update loop on subsequent runs).
+  # If :latest or a non-X.Y.Z format version, we look it up with mixlib-install.
+  # @return Mixlib::Versioning::Format::PartialSemVer
+  def desired_version
+    load_mixlib_versioning
+    if new_resource.version.to_sym == :latest
+      version = Mixlib::Versioning.parse(mixlib_install.available_versions.last)
+      Chef::Log.debug("User specified version of :latest. Looking up using mixlib-install. Value maps to #{version}.")
+    elsif new_resource.download_url_override
+      version = Mixlib::Versioning.parse(new_resource.version)
+      Chef::Log.debug("download_url_override specified. Using specified version of #{version}")
+    elsif new_resource.version.split('.').count == 3 && !new_resource.license_id
+      Chef::Log.debug("User specified version of #{new_resource.version}. No need check this against Chef servers.")
+      version = Mixlib::Versioning.parse(new_resource.version)
+    else
+      artifact = Array(mixlib_install.artifact_info).first
+      version = Mixlib::Versioning.parse(artifact.version)
+      Chef::Log.debug("User specified version of #{new_resource.version}. Looking up using mixlib-install. Value maps to #{version}.")
+    end
+    version
+  end
 end

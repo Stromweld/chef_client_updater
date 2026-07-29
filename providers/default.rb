@@ -128,27 +128,6 @@ def current_version
   end
 end
 
-# the version we WANT TO INSTALL. If the user specifies a version in X.Y.X format
-# we use that without looking it up. If :latest or a non-X.Y.Z format version we
-# look it up with mixlib-install to determine the latest version matching the request
-# @return Mixlib::Versioning::Format::PartialSemVer
-def desired_version
-  if new_resource.version.to_sym == :latest # we need to find what :latest really means
-    version = Mixlib::Versioning.parse(mixlib_install.available_versions.last)
-    Chef::Log.debug("User specified version of :latest. Looking up using mixlib-install. Value maps to #{version}.")
-  elsif new_resource.download_url_override # probably in an air-gapped environment.
-    version = Mixlib::Versioning.parse(new_resource.version)
-    Chef::Log.debug("download_url_override specified. Using specified version of #{version}")
-  elsif new_resource.version.split('.').count == 3 # X.Y.Z version format given
-    Chef::Log.debug("User specified version of #{new_resource.version}. No need check this against Chef servers.")
-    version = Mixlib::Versioning.parse(new_resource.version)
-  else # lookup their shortened version to find the X.Y.Z version
-    version = Mixlib::Versioning.parse(Array(mixlib_install.artifact_info).first.version)
-    Chef::Log.debug("User specified version of #{new_resource.version}. Looking up using mixlib-install as this is not X.Y.Z format. Value maps to #{version}.")
-  end
-  version
-end
-
 # why wouldn't we use the built in update_available? method in mixlib-install?
 # well that would use current_version from mixlib-install and it has no
 # concept of preventing downgrades
@@ -614,7 +593,19 @@ def execute_install_script(install_script)
 
           Write-Output "Running product install script..."
           try {
+            # Reset $LASTEXITCODE to $null before invoking the install script so that any
+            # non-zero exit code left behind by #{uninstall_if_necessary} (e.g. msiexec /x)
+            # does not produce a false positive on the check below.
+            $LASTEXITCODE = $null
             #{install_script}
+            # PowerShell's try/catch only catches *terminating* errors. External programs
+            # such as msiexec.exe signal failure via a non-zero exit code, not by throwing
+            # an exception, so a failed install would otherwise silently fall through and
+            # leave the node in an indeterminate state. Explicitly convert a non-zero exit
+            # code into a terminating error so the catch block fires and the rollback runs.
+            if ($LASTEXITCODE -ne $null -and $LASTEXITCODE -ne 0) {
+              throw "Install script exited with non-zero exit code: $LASTEXITCODE"
+            }
           }
           catch {
             Write-Output "An error occurred while trying to install product"

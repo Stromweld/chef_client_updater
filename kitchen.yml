@@ -79,7 +79,7 @@ suites:
       - recipe[test::license_id]
     verifier:
       inspec_tests:
-        - path: ./test/integration/default/
+        - path: ./test/integration/license_id/
     attributes:
       chef_client_updater:
         license_id: 'free-79df705d-b685-419a-8b68-88401f74ff72-3999'
